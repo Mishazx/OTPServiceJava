@@ -15,8 +15,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-// import ru.mishazx.otpservicejava.model.OTPCode;
-// import ru.mishazx.otpservicejava.model.User;
 import ru.mishazx.otpservicejava.repository.UserRepository;
 
 import java.util.ArrayList;

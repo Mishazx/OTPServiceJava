@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -54,8 +53,6 @@ public class SecurityConfig {
                 .requestMatchers("/").permitAll()
                 // Пути OTP аутентификации доступны аутентифицированным пользователям
                 .requestMatchers("/auth/otp/**").authenticated()
-                // API для работы с транзакциями и категориями - только для аутентифицированных пользователей
-                .requestMatchers("/api/**").authenticated()
                 // Все остальные страницы - только для аутентифицированных пользователей
                 .anyRequest().authenticated()
         )

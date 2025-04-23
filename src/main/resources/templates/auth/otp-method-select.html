@@ -102,6 +102,28 @@
                 input.addEventListener('change', toggleRequiredFields);
             });
 
+            // Добавляем обработчики события focus для инпутов
+            phoneInput.addEventListener('focus', () => {
+                document.querySelector('#method-sms').closest('.otp-method-card').classList.add('active');
+            });
+            emailInput.addEventListener('focus', () => {
+                document.querySelector('#method-email').closest('.otp-method-card').classList.add('active');
+            });
+            telegramInput.addEventListener('focus', () => {
+                document.querySelector('#method-telegram').closest('.otp-method-card').classList.add('active');
+            });
+
+            // Убираем класс active при потере фокуса
+            phoneInput.addEventListener('blur', () => {
+                document.querySelector('#method-sms').closest('.otp-method-card').classList.remove('active');
+            });
+            emailInput.addEventListener('blur', () => {
+                document.querySelector('#method-email').closest('.otp-method-card').classList.remove('active');
+            });
+            telegramInput.addEventListener('blur', () => {
+                document.querySelector('#method-telegram').closest('.otp-method-card').classList.remove('active');
+            });
+
             // Инициализация
             toggleRequiredFields();
         });
