@@ -2,6 +2,71 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .main-header {
+            background-color: #f8f9fa;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo a {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        .main-nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 1rem;
+        }
+        .main-nav a {
+            text-decoration: none;
+            color: #333;
+        }
+        .auth-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .username {
+            font-weight: bold;
+            color: #333;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-login {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .btn-register {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-logout {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <!-- Фрагмент хедера, который можно включать на все страницы -->
@@ -13,13 +78,13 @@
             <nav class="main-nav">
                 <ul>
                     <li><a th:href="@{/}">Главная</a></li>
-                    <li sec:authorize="isAuthenticated()"><a th:href="@{/dashboard}">Личный кабинет</a></li>
+                    <li sec:authorize="isAuthenticated()" th:if="${session.OTP_VERIFIED}"><a th:href="@{/dashboard}">Личный кабинет</a></li>
                 </ul>
             </nav>
             <div class="auth-nav">
                 <!-- Если пользователь аутентифицирован, показываем его имя и кнопку выхода -->
                 <div sec:authorize="isAuthenticated()" class="user-info">
-                    <span class="username" sec:authentication="name">Username</span>
+                    <span class="username" sec:authentication="principal.username">Username</span>
                     <form th:action="@{/logout}" method="post" class="logout-form">
                         <button type="submit" class="btn btn-logout">Выйти</button>
                     </form>

@@ -56,7 +56,31 @@ public class HomeController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard() {
+    public String dashboard(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        // Проверяем, аутентифицирован ли пользователь
+        if (authentication == null || !authentication.isAuthenticated() || 
+            authentication.getName().equals("anonymousUser")) {
+            log.info("Unauthenticated user trying to access dashboard, redirecting to login");
+            return "redirect:/login";
+        }
+
+        // Проверяем, прошел ли пользователь OTP
+        HttpSession session = request.getSession(false);
+        boolean otpVerified = false;
+
+        if (session != null) {
+            Boolean verified = (Boolean) session.getAttribute("OTP_VERIFIED");
+            otpVerified = verified != null && verified;
+        }
+
+        if (!otpVerified) {
+            log.info("User {} not verified with OTP, redirecting to OTP method selection", authentication.getName());
+            return "redirect:/auth/otp/method";
+        }
+
+        log.info("User {} accessing dashboard", authentication.getName());
         return "dashboard";
     }
 }

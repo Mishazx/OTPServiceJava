@@ -3,9 +3,31 @@
 <head th:fragment="head(title, links, scripts)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:replace="${title}">OTP Service</title>
+    <title th:text="${title}">OTP Service</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <th:block th:replace="${links}"></th:block>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow-x: hidden;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        main {
+            flex: 1;
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+    </style>
 </head>
 <body>
     <!-- Включаем хедер на все страницы -->
@@ -13,7 +35,9 @@
     
     <!-- Основное содержимое страницы -->
     <main>
-        <div th:replace="${content}"></div>
+        <div class="container">
+            <div th:replace="${content}"></div>
+        </div>
     </main>
     
     <!-- Скрипты -->
