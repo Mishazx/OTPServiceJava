@@ -78,11 +78,26 @@ public class AuthController {
      * После успешной регистрации перенаправляет на страницу входа.
      */
     @PostMapping("/register")
-    public String register(@ModelAttribute User user, Model model) {
+    public String register(
+            @RequestParam("username") String username,
+            @RequestParam("password") String password,
+            @RequestParam("confirmPassword") String confirmPassword,
+            Model model) {
+        
+        // Проверка подтверждения пароля
+        if (!password.equals(confirmPassword)) {
+            model.addAttribute("error", "Пароли не совпадают");
+            User user = new User();
+            user.setUsername(username);
+            model.addAttribute("user", user);
+            return "auth/register";
+        }
+        
         // Проверяем, существует ли уже пользователь с таким именем
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            // Если пользователь существует, добавляем сообщение об ошибке и возвращаем форму регистрации
-            model.addAttribute("error", "Пользователь с именем '" + user.getUsername() + "' уже существует. Пожалуйста, выберите другое имя.");
+        if (userRepository.findByUsername(username).isPresent()) {
+            model.addAttribute("error", "Пользователь с именем '" + username + "' уже существует. Пожалуйста, выберите другое имя.");
+            User user = new User();
+            user.setUsername(username);
             model.addAttribute("user", user);
             return "auth/register";
         }
@@ -90,15 +105,15 @@ public class AuthController {
         RoleUser userRole = roleService.findRole("USER");
 
         User newUser = User.builder()
-                .password(passwordEncoder.encode(user.getPassword()))
-                .username(user.getUsername())
+                .password(passwordEncoder.encode(password))
+                .username(username)
                 .roleUsers(Set.of(userRole))
                 .enabled(true)
                 .build();
 
         userRepository.save(newUser);
 
-        return "redirect:/dashboard";
+        return "redirect:/login?registered";
     }
 
     /**
