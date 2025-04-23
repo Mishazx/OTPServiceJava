@@ -26,9 +26,8 @@ public class OTPService {
     private final OTPRepository otpRepository;
     private final OTPConfigRepository otpConfigRepository;
     
-    // Use TelegramBotServiceStub instead of TelegramBotService
     @Autowired(required = false)
-    private TelegramBotServiceStub telegramBotService;
+    private TelegramBotService telegramBotService;
 
 //    @Autowired
 //    public OTPService(OTPRepository otpRepository, OTPConfigRepository otpConfigRepository) {

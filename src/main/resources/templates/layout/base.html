@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
+<head th:fragment="head(title, links, scripts)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:replace="${title}">OTP Service</title>
@@ -17,6 +17,8 @@
     </main>
     
     <!-- Скрипты -->
-    <th:block th:replace="${scripts}"></th:block>
+    <th:block th:fragment="scripts(scripts)">
+        <th:block th:replace="${scripts}"></th:block>
+    </th:block>
 </body>
 </html>
