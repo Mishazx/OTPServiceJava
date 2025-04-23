@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:fragment="head(title, links, scripts)">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:replace="${title}">OTP Service</title>
+<head th:replace="~{layout/base :: head(~{::title}, ~{::link}, ~{})}">
+    <title th:text="${title}">OTP Service</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
-    <th:block th:replace="${links}"></th:block>
 </head>
-<body>
-    <!-- Включаем хедер на все страницы -->
+<body th:fragment="body(content, scripts)">
+    <!-- Включаем хедер -->
     <div th:replace="~{fragments/header :: header}"></div>
     
     <!-- Основное содержимое страницы -->
@@ -19,4 +16,4 @@
     <!-- Скрипты -->
     <th:block th:replace="${scripts}"></th:block>
 </body>
-</html>
+</html> 

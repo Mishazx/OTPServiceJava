@@ -10,12 +10,13 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.mishazx.otpservicejava.service.TelegramBotService;
+import ru.mishazx.otpservicejava.repository.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Configuration for Telegram bot integration.
- * This class registers the TelegramBotService with the Telegram API.
+ * Конфигурация для интеграции с Telegram ботом.
+ * Создает и регистрирует TelegramBotService в Telegram API.
  */
 @Configuration
 @Slf4j
@@ -31,7 +32,6 @@ public class TelegramBotConfig {
     @Value("${telegram.bot.name:}")
     private String botName;
     
-    @Autowired(required = false)
     private TelegramBotService telegramBotService;
     
     @PostConstruct
@@ -40,6 +40,13 @@ public class TelegramBotConfig {
         log.info("Bot token is {}set, bot name is {}set", 
                 botToken != null && !botToken.isEmpty() ? "" : "NOT ",
                 botName != null && !botName.isEmpty() ? "" : "NOT ");
+    }
+
+    @Bean
+    public TelegramBotService telegramBotService(UserRepository userRepository) {
+        log.info("Creating TelegramBotService bean");
+        this.telegramBotService = new TelegramBotService(userRepository, botToken);
+        return this.telegramBotService;
     }
 
     @Bean
