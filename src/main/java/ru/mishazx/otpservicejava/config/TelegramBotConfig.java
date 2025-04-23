@@ -45,21 +45,26 @@ public class TelegramBotConfig {
     @Bean
     public TelegramBotService telegramBotService(UserRepository userRepository) {
         log.info("Creating TelegramBotService bean");
-        this.telegramBotService = new TelegramBotService(userRepository, botToken);
+        if (botToken != null && !botToken.isEmpty()) {
+            this.telegramBotService = new TelegramBotService(userRepository, botToken);
+        } else {
+            log.warn("Bot token is not set, creating TelegramBotService without token");
+            this.telegramBotService = new TelegramBotService(userRepository);
+        }
         return this.telegramBotService;
     }
 
     @Bean
     public TelegramBotsApi telegramBotsApi() {
         try {
-            if (telegramBotService != null) {
+            if (telegramBotService != null && botToken != null && !botToken.isEmpty()) {
                 log.info("Registering Telegram bot with Telegram API");
                 TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
                 api.registerBot(telegramBotService);
                 log.info("Telegram bot successfully registered with name: {}", telegramBotService.getBotUsername());
                 return api;
             } else {
-                log.warn("TelegramBotService is null, not registering with Telegram API. Check if telegram.enabled is set to true and the bot token is provided.");
+                log.warn("TelegramBotService is null or bot token is not provided, skipping registration with Telegram API.");
             }
         } catch (TelegramApiException e) {
             log.error("Failed to register Telegram bot: {}", e.getMessage(), e);

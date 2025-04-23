@@ -4,9 +4,10 @@
 -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{layout/base :: head(~{::title}, ~{::link}, ~{})}">
-    <title>Проверка кода доступа</title>
+<head th:replace="~{layout/base :: head(~{::title}, ~{::link}, ~{::#extra-scripts})}">
+    <title>Проверка кода</title>
     <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <script id="extra-scripts" th:src="@{/js/auth-helper.js}"></script>
 </head>
 <body>
     <div th:replace="~{fragments/header :: header}"></div>
@@ -14,7 +15,7 @@
         <div class="auth-container">
             <div class="auth-header">
                 <h1>Введите код подтверждения</h1>
-                <p th:text="${'Мы отправили код на ' + deliveryDestination}">Мы отправили код на ваш телефон</p>
+                <p>Мы отправили код на <span th:text="${destination}"></span></p>
             </div>
 
             <div th:if="${error}" class="alert alert-danger">
@@ -24,30 +25,37 @@
                 <span th:text="${error}"></span>
             </div>
 
-            <div class="otp-timer">
-                <span id="timer">05:00</span>
-                <button id="resendBtn" class="btn-link" style="display: none;" onclick="resendCode()">Отправить новый код</button>
-            </div>
-
-            <form th:action="@{/auth/otp/verify}" method="post">
+            <form th:action="@{/auth/otp/verify}" method="post" id="otpForm" onsubmit="return validateOtpForm(this)">
                 <input type="hidden" name="userId" th:value="${userId}" />
-                <input type="hidden" name="operationId" th:value="${operationId}" />
+                <input type="hidden" name="method" th:value="${method}" />
+                <input type="hidden" name="destination" th:value="${destination}" />
+                <input type="hidden" id="code" name="code" value="">
 
-                <div class="otp-code-input">
-                    <input type="text" name="digit1" class="form-control otp-digit" maxlength="1" required autofocus>
-                    <input type="text" name="digit2" class="form-control otp-digit" maxlength="1" required>
-                    <input type="text" name="digit3" class="form-control otp-digit" maxlength="1" required>
-                    <input type="text" name="digit4" class="form-control otp-digit" maxlength="1" required>
-                    <input type="text" name="digit5" class="form-control otp-digit" maxlength="1" required>
-                    <input type="text" name="digit6" class="form-control otp-digit" maxlength="1" required>
+                <div class="form-group">
+                    <label>Код подтверждения</label>
+                    <div class="otp-code-input">
+                        <input type="text" class="form-control otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric" autofocus>
+                        <input type="text" class="form-control otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="form-control otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="form-control otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="form-control otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="form-control otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                    </div>
+                    <div class="field-hint">Введите 6-значный код, который мы вам отправили</div>
                 </div>
 
-                <input type="hidden" id="fullCode" name="code" required>
+                <div id="countdown-container" class="countdown-container">
+                    <div id="countdown">
+                        <span id="timer">05:00</span>
+                    </div>
+                    <button type="button" id="resend-button" class="btn btn-link" disabled>
+                        Отправить код повторно
+                    </button>
+                </div>
 
-                <button type="submit" class="btn btn-primary">Подтвердить</button>
-
-                <div class="auth-footer">
-                    <a th:href="@{/auth/otp/method}" class="btn-link">Изменить способ получения кода</a>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Подтвердить</button>
+                    <a th:href="@{/auth/otp/method}" class="btn btn-text">Изменить способ получения</a>
                 </div>
             </form>
         </div>
@@ -55,79 +63,155 @@
 
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {
-            // Управление вводом цифр кода
-            const digitInputs = document.querySelectorAll('.otp-digit');
-            const fullCodeInput = document.getElementById('fullCode');
-
-            // Автопереход к следующему полю
-            digitInputs.forEach((input, index) => {
-                // Обработка вставки кода
-                input.addEventListener('paste', (e) => {
-                    e.preventDefault();
-                    const pastedData = e.clipboardData.getData('text');
-                    const digits = pastedData.replace(/\D/g, '').substr(0, 6).split('');
-                    
-                    digits.forEach((digit, i) => {
-                        if (i < digitInputs.length) {
-                            digitInputs[i].value = digit;
+            // Инициализация ввода OTP кода
+            initOtpInput();
+            
+            // Установка таймера
+            let timeLeft = 300; // 5 минут в секундах
+            const timerElement = document.getElementById('timer');
+            const resendButton = document.getElementById('resend-button');
+            
+            // Функция форматирования времени в MM:SS
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            // Запуск таймера
+            const countdownInterval = setInterval(function() {
+                timeLeft--;
+                timerElement.textContent = formatTime(timeLeft);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    resendButton.disabled = false;
+                    timerElement.textContent = "00:00";
+                }
+            }, 1000);
+            
+            // Обработчик кнопки повторной отправки
+            resendButton.addEventListener('click', function() {
+                location.href = /*[[@{/auth/otp/method}]]*/ '/auth/otp/method';
+            });
+            
+            // Инициализация полей ввода OTP кода
+            function initOtpInput() {
+                const otpDigits = document.querySelectorAll('.otp-digit');
+                const codeInput = document.getElementById('code');
+                
+                // Автоматический переход к следующему полю
+                otpDigits.forEach((digit, index) => {
+                    // При вводе символа
+                    digit.addEventListener('input', function() {
+                        // Если введен символ, переходим к следующему полю
+                        if (digit.value.length === 1) {
+                            // Разрешаем только цифры
+                            const val = digit.value.replace(/[^0-9]/g, '');
+                            digit.value = val;
+                            
+                            if (val && index < otpDigits.length - 1) {
+                                otpDigits[index + 1].focus();
+                            }
+                            
+                            // Обновляем значение скрытого поля с полным кодом
+                            updateCodeValue();
                         }
                     });
                     
-                    if (digits.length > 0) {
-                        const lastIndex = Math.min(digits.length - 1, 5);
-                        digitInputs[lastIndex].focus();
-                    }
-                    
-                    updateFullCode();
-                });
-
-                // Переход между полями при вводе
-                input.addEventListener('input', (e) => {
-                    if (e.target.value.length === 1) {
-                        if (index < digitInputs.length - 1) {
-                            digitInputs[index + 1].focus();
+                    // Обработка клавиш Backspace и Delete
+                    digit.addEventListener('keydown', function(e) {
+                        // Backspace - возврат к предыдущему полю, если текущее пустое
+                        if (e.key === 'Backspace' && digit.value === '' && index > 0) {
+                            otpDigits[index - 1].focus();
+                            otpDigits[index - 1].value = '';
+                            updateCodeValue();
+                            e.preventDefault();
                         }
-                    }
-                    updateFullCode();
+                        
+                        // Стрелка влево - переход к предыдущему полю
+                        if (e.key === 'ArrowLeft' && index > 0) {
+                            otpDigits[index - 1].focus();
+                            e.preventDefault();
+                        }
+                        
+                        // Стрелка вправо - переход к следующему полю
+                        if (e.key === 'ArrowRight' && index < otpDigits.length - 1) {
+                            otpDigits[index + 1].focus();
+                            e.preventDefault();
+                        }
+                    });
+                    
+                    // При вставке
+                    digit.addEventListener('paste', function(e) {
+                        e.preventDefault();
+                        
+                        // Получаем текст из буфера обмена
+                        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                        
+                        // Очищаем от нецифровых символов
+                        const cleanData = pasteData.replace(/[^0-9]/g, '').substr(0, 6);
+                        
+                        if (cleanData) {
+                            // Заполняем поля цифрами из буфера
+                            for (let i = 0; i < cleanData.length && i < otpDigits.length; i++) {
+                                otpDigits[i].value = cleanData[i];
+                            }
+                            
+                            // Переводим фокус на последнее заполненное поле или следующее незаполненное
+                            const focusIndex = Math.min(cleanData.length, otpDigits.length - 1);
+                            otpDigits[focusIndex].focus();
+                            
+                            // Обновляем значение скрытого поля с полным кодом
+                            updateCodeValue();
+                        }
+                    });
                 });
-
-                // Обработка Backspace 
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
-                        digitInputs[index - 1].focus();
-                    }
-                });
-            });
-
-            // Обновление полного кода
-            function updateFullCode() {
-                fullCodeInput.value = Array.from(digitInputs)
-                    .map(input => input.value)
-                    .join('');
-            }
-
-            // Таймер обратного отсчета
-            let timeLeft = 5 * 60; // 5 минут
-            const timerElement = document.getElementById('timer');
-            const resendButton = document.getElementById('resendBtn');
-            
-            const timerInterval = setInterval(() => {
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
                 
-                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
-                if (--timeLeft < 0) {
-                    clearInterval(timerInterval);
-                    timerElement.textContent = 'Время истекло';
-                    resendButton.style.display = 'inline-block';
+                // Функция обновления значения скрытого поля с полным кодом
+                function updateCodeValue() {
+                    let code = '';
+                    otpDigits.forEach(digit => {
+                        code += digit.value;
+                    });
+                    codeInput.value = code;
                 }
-            }, 1000);
+            }
         });
-
-        // Функция для повторной отправки кода
-        function resendCode() {
-            window.location.href = '[[@{/auth/otp/method}]]';
+        
+        // Валидация формы перед отправкой
+        function validateOtpForm(form) {
+            const codeInput = form.querySelector('#code');
+            const otpDigits = form.querySelectorAll('.otp-digit');
+            let isValid = true;
+            
+            // Собираем значения всех полей
+            let code = '';
+            otpDigits.forEach(digit => {
+                code += digit.value;
+            });
+            
+            // Обновляем скрытое поле
+            codeInput.value = code;
+            
+            // Проверяем, что введены все 6 цифр
+            if (!code.match(/^\d{6}$/)) {
+                // Находим первое пустое поле
+                let emptyDigit = null;
+                otpDigits.forEach(digit => {
+                    if (!digit.value && !emptyDigit) {
+                        emptyDigit = digit;
+                    }
+                });
+                
+                if (emptyDigit) {
+                    emptyDigit.focus();
+                }
+                
+                isValid = false;
+            }
+            
+            return isValid;
         }
     </script>
 </body>

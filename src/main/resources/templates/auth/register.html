@@ -26,24 +26,26 @@
                 <span th:text="${error}"></span>
             </div>
 
-            <form th:action="@{/register}" method="post" class="auth-form">
+            <form th:action="@{/register}" method="post">
                 <div class="form-group">
                     <label for="username">Имя пользователя</label>
-                    <input type="text" id="username" name="username" th:value="${user?.username}" required>
+                    <input type="text" id="username" name="username" th:value="${user?.username}" class="form-control form-control-yellow" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Пароль</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" class="form-control form-control-yellow" required>
                 </div>
                 <div class="form-group">
                     <label for="confirmPassword">Подтвердите пароль</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control form-control-yellow" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-blue">Зарегистрироваться</button>
+                </div>
             </form>
 
-            <div class="auth-footer">
-                <p>Уже есть аккаунт? <a th:href="@{/login}">Войти</a></p>
+            <div class="auth-links">
+                <p class="auth-link-item">Уже есть аккаунт? <a th:href="@{/login}" class="auth-link">Войти</a></p>
             </div>
         </div>
     </div>

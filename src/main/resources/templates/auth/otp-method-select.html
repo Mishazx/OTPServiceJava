@@ -4,9 +4,10 @@
 -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{layout/base :: head(~{::title}, ~{::link}, ~{})}">
+<head th:replace="~{layout/base :: head(~{::title}, ~{::link}, ~{::#extra-scripts})}">
     <title>Двухфакторная аутентификация</title>
     <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <script id="extra-scripts" th:src="@{/js/auth-helper.js}"></script>
 </head>
 <body>
     <div th:replace="~{fragments/header :: header}"></div>
@@ -24,109 +25,234 @@
                 <span th:text="${error}"></span>
             </div>
 
-            <form th:action="@{/auth/otp/send}" method="post">
+            <form th:action="@{/auth/otp/send}" method="post" onsubmit="return validateMethodForm(this)">
                 <input type="hidden" name="userId" th:value="${userId}" />
+                <input type="hidden" id="method" name="method" value="SMS">
 
+                <!-- Выбор метода верификации в виде карточек -->
                 <div class="otp-methods">
-                    <div class="otp-method-card">
-                        <input type="radio" id="method-sms" name="method" value="SMS" checked>
-                        <label for="method-sms" class="otp-method-label">
-                            <svg class="otp-icon" viewBox="0 0 24 24">
-                                <path fill="currentColor" d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M6,9H18V11H6M14,14H6V12H14M18,8H6V6H18"></path>
-                            </svg>
-                            <div>
-                                <h3>SMS</h3>
-                                <p>Получить код в SMS-сообщении</p>
-                                <input type="tel" name="phone" placeholder="+79XXXXXXXXX" class="form-control mt-2" required>
+                    <div class="otp-method-card" data-method="SMS">
+                        <label class="otp-method-label">
+                            <div class="otp-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M6,9H18V11H6M14,14H6V12H14M18,8H6V6H18"></path>
+                                </svg>
                             </div>
+                            <h3>SMS</h3>
+                            <p>Код на телефон</p>
                         </label>
                     </div>
-
-                    <div class="otp-method-card">
-                        <input type="radio" id="method-email" name="method" value="EMAIL">
-                        <label for="method-email" class="otp-method-label">
-                            <svg class="otp-icon" viewBox="0 0 24 24">
-                                <path fill="currentColor" d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"></path>
-                            </svg>
-                            <div>
-                                <h3>Email</h3>
-                                <p>Получить код по электронной почте</p>
-                                <input type="email" name="email" placeholder="example@mail.com" class="form-control mt-2" required>
+                    
+                    <div class="otp-method-card" data-method="EMAIL">
+                        <label class="otp-method-label">
+                            <div class="otp-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"></path>
+                                </svg>
                             </div>
+                            <h3>Email</h3>
+                            <p>Код на почту</p>
                         </label>
                     </div>
-
-                    <div class="otp-method-card">
-                        <input type="radio" id="method-telegram" name="method" value="TELEGRAM">
-                        <label for="method-telegram" class="otp-method-label">
-                            <svg class="otp-icon" viewBox="0 0 24 24">
-                                <path fill="currentColor" d="M9.78,18.65L10.06,14.42L17.74,7.5C18.08,7.19 17.67,7.04 17.22,7.31L7.74,13.3L3.64,12C2.76,11.75 2.75,11.14 3.84,10.7L19.81,4.54C20.54,4.21 21.24,4.72 20.96,5.84L18.24,18.65C18.05,19.56 17.5,19.78 16.74,19.36L12.6,16.3L10.61,18.23C10.38,18.46 10.19,18.65 9.78,18.65Z"></path>
-                            </svg>
-                            <div>
-                                <h3>Telegram</h3>
-                                <p>Получить код в Telegram</p>
-                                <input type="text" name="telegram" placeholder="@username" class="form-control mt-2" required>
+                    
+                    <div class="otp-method-card" data-method="TELEGRAM">
+                        <label class="otp-method-label">
+                            <div class="otp-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M9.78,18.65L10.06,14.42L17.74,7.5C18.08,7.19 17.67,7.04 17.22,7.31L7.74,13.3L3.64,12C2.76,11.75 2.75,11.14 3.84,10.7L19.81,4.54C20.54,4.21 21.24,4.72 20.96,5.84L18.24,18.65C18.05,19.56 17.5,19.78 16.74,19.36L12.6,16.3L10.61,18.23C10.38,18.46 10.19,18.65 9.78,18.65Z"></path>
+                                </svg>
                             </div>
+                            <h3>Telegram</h3>
+                            <p>Код в мессенджер</p>
+                        </label>
+                    </div>
+                    
+                    <div class="otp-method-card" data-method="PUSH">
+                        <label class="otp-method-label">
+                            <div class="otp-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21"></path>
+                                </svg>
+                            </div>
+                            <h3>Push</h3>
+                            <p>Код в приложение</p>
                         </label>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Отправить код</button>
+                <!-- Поле для SMS (телефон) -->
+                <div id="sms-group" class="form-group method-detail-group">
+                    <label for="phone">Номер телефона</label>
+                    <input type="tel" id="phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX" 
+                           class="form-control" oninput="formatPhoneNumber(this)" required>
+                    <div class="field-hint">Введите номер телефона в формате +7 (XXX) XXX-XX-XX</div>
+                </div>
+
+                <!-- Поле для Email -->
+                <div id="email-group" class="form-group method-detail-group" style="display: none;">
+                    <label for="email">Email адрес</label>
+                    <input type="email" id="email" name="email" placeholder="example@mail.com" 
+                           class="form-control">
+                    <div class="field-hint">Введите ваш email адрес для получения кода</div>
+                </div>
+
+                <!-- Поле для Telegram -->
+                <div id="telegram-group" class="form-group method-detail-group" style="display: none;">
+                    <label for="telegram">Telegram</label>
+                    <input type="text" id="telegram" name="telegram" placeholder="@username" 
+                           class="form-control">
+                    <div class="field-hint">Введите ваш Telegram username (с символом @)</div>
+                    <div class="telegram-info mt-2">
+                        <p><strong>Как подключить Telegram:</strong></p>
+                        <ol>
+                            <li>Откройте Telegram и найдите бота @OTPServiceBot</li>
+                            <li>Отправьте боту команду /start</li>
+                            <li>Зарегистрируйтесь с помощью команды /register ваш_логин</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Поле для Push уведомлений -->
+                <div id="push-group" class="form-group method-detail-group" style="display: none;">
+                    <label for="device">Устройство</label>
+                    <select id="device" name="device" class="form-control">
+                        <option value="android">Android</option>
+                        <option value="ios">iPhone/iPad</option>
+                    </select>
+                    <div class="field-hint">Выберите устройство для получения Push-уведомления</div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Отправить код</button>
+                </div>
             </form>
         </div>
     </div>
 
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {
-            // Включаем/выключаем нужные поля ввода в зависимости от выбранного метода
-            const methodInputs = document.querySelectorAll('input[name="method"]');
-            const phoneInput = document.querySelector('input[name="phone"]');
-            const emailInput = document.querySelector('input[name="email"]');
-            const telegramInput = document.querySelector('input[name="telegram"]');
-
-            function toggleRequiredFields() {
-                const selectedMethod = document.querySelector('input[name="method"]:checked').value;
-
-                phoneInput.required = selectedMethod === 'SMS';
-                emailInput.required = selectedMethod === 'EMAIL';
-                telegramInput.required = selectedMethod === 'TELEGRAM';
-
-                // Визуальное отображение активности полей
-                document.querySelectorAll('.otp-method-card').forEach(card => {
-                    card.classList.remove('active');
+            // Управление отображением полей в зависимости от выбранного метода
+            const methodInput = document.getElementById('method');
+            const smsGroup = document.getElementById('sms-group');
+            const emailGroup = document.getElementById('email-group');
+            const telegramGroup = document.getElementById('telegram-group');
+            const pushGroup = document.getElementById('push-group');
+            const phoneInput = document.getElementById('phone');
+            const emailInput = document.getElementById('email');
+            const telegramInput = document.getElementById('telegram');
+            const deviceSelect = document.getElementById('device');
+            
+            // Получаем все карточки методов
+            const methodCards = document.querySelectorAll('.otp-method-card');
+            
+            // Добавляем обработчик клика для карточек
+            methodCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Снимаем активный класс со всех карточек
+                    methodCards.forEach(c => c.classList.remove('active'));
+                    
+                    // Делаем текущую карточку активной
+                    this.classList.add('active');
+                    
+                    // Обновляем скрытое поле метода
+                    const method = this.getAttribute('data-method');
+                    methodInput.value = method;
+                    
+                    // Обновляем отображение полей ввода
+                    toggleMethodFields();
                 });
-                document.querySelector(`#method-${selectedMethod.toLowerCase()}`).closest('.otp-method-card').classList.add('active');
+            });
+            
+            // Делаем первую карточку активной по умолчанию
+            methodCards[0].classList.add('active');
+            
+            // Функция переключения видимости полей ввода
+            function toggleMethodFields() {
+                const method = methodInput.value;
+                
+                // Сначала скрываем все группы
+                smsGroup.style.display = 'none';
+                emailGroup.style.display = 'none';
+                telegramGroup.style.display = 'none';
+                pushGroup.style.display = 'none';
+                
+                // Делаем все поля необязательными
+                phoneInput.required = false;
+                emailInput.required = false;
+                telegramInput.required = false;
+                deviceSelect.required = false;
+                
+                // Показываем нужную группу и делаем поле обязательным
+                if (method === 'SMS') {
+                    smsGroup.style.display = 'block';
+                    phoneInput.required = true;
+                } else if (method === 'EMAIL') {
+                    emailGroup.style.display = 'block';
+                    emailInput.required = true;
+                } else if (method === 'TELEGRAM') {
+                    telegramGroup.style.display = 'block';
+                    telegramInput.required = true;
+                } else if (method === 'PUSH') {
+                    pushGroup.style.display = 'block';
+                    deviceSelect.required = true;
+                }
             }
-
-            methodInputs.forEach(input => {
-                input.addEventListener('change', toggleRequiredFields);
-            });
-
-            // Добавляем обработчики события focus для инпутов
-            phoneInput.addEventListener('focus', () => {
-                document.querySelector('#method-sms').closest('.otp-method-card').classList.add('active');
-            });
-            emailInput.addEventListener('focus', () => {
-                document.querySelector('#method-email').closest('.otp-method-card').classList.add('active');
-            });
-            telegramInput.addEventListener('focus', () => {
-                document.querySelector('#method-telegram').closest('.otp-method-card').classList.add('active');
-            });
-
-            // Убираем класс active при потере фокуса
-            phoneInput.addEventListener('blur', () => {
-                document.querySelector('#method-sms').closest('.otp-method-card').classList.remove('active');
-            });
-            emailInput.addEventListener('blur', () => {
-                document.querySelector('#method-email').closest('.otp-method-card').classList.remove('active');
-            });
-            telegramInput.addEventListener('blur', () => {
-                document.querySelector('#method-telegram').closest('.otp-method-card').classList.remove('active');
-            });
-
-            // Инициализация
-            toggleRequiredFields();
+            
+            // Инициализация при загрузке
+            toggleMethodFields();
         });
+        
+        // Валидация формы перед отправкой
+        function validateMethodForm(form) {
+            const method = form.querySelector('#method').value;
+            let isValid = true;
+            let input;
+            
+            // Проверяем нужное поле в зависимости от метода
+            if (method === 'SMS') {
+                input = form.querySelector('#phone');
+                if (!input.value.match(/\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}/)) {
+                    showError(input, 'Введите корректный номер телефона');
+                    isValid = false;
+                }
+            } else if (method === 'EMAIL') {
+                input = form.querySelector('#email');
+                if (!input.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                    showError(input, 'Введите корректный email адрес');
+                    isValid = false;
+                }
+            } else if (method === 'TELEGRAM') {
+                input = form.querySelector('#telegram');
+                if (!input.value.match(/^@[\w\d_]{5,32}$/)) {
+                    showError(input, 'Введите корректный Telegram username');
+                    isValid = false;
+                }
+            } else if (method === 'PUSH') {
+                input = form.querySelector('#device');
+                if (!input.value) {
+                    showError(input, 'Выберите устройство для Push-уведомления');
+                    isValid = false;
+                }
+            }
+            
+            return isValid;
+        }
+        
+        // Показать ошибку валидации
+        function showError(input, message) {
+            const formGroup = input.closest('.form-group');
+            const errorDiv = formGroup.querySelector('.error-message') || 
+                            document.createElement('div');
+            
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            if (!formGroup.querySelector('.error-message')) {
+                formGroup.appendChild(errorDiv);
+            }
+            
+            input.classList.add('error');
+        }
     </script>
 </body>
 </html>

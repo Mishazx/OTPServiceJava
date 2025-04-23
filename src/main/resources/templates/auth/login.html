@@ -34,21 +34,23 @@
         <span th:text="${error}">Ошибка входа</span>
       </div>
 
-      <form th:action="@{/login}" method="post" class="auth-form">
+      <form th:action="@{/login}" method="post">
         <div class="form-group">
           <label for="username">Имя пользователя</label>
-          <input type="text" id="username" name="username" required autofocus>
+          <input type="text" id="username" name="username" class="form-control form-control-yellow" required autofocus>
         </div>
         <div class="form-group">
           <label for="password">Пароль</label>
-          <input type="password" id="password" name="password" required>
+          <input type="password" id="password" name="password" class="form-control form-control-yellow" required>
         </div>
-        <button type="submit" class="btn btn-primary">Войти</button>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-blue">Войти</button>
+        </div>
       </form>
 
-      <div class="auth-footer">
-        <p>Нет аккаунта? <a th:href="@{/register}">Регистрация</a></p>
-        <p><a th:href="@{/forgot-password}">Забыли пароль?</a></p>
+      <div class="auth-links">
+        <p class="auth-link-item">Нет аккаунта? <a th:href="@{/register}" class="auth-link">Регистрация</a></p>
+        <p class="auth-link-item"><a th:href="@{/forgot-password}" class="auth-link">Забыли пароль?</a></p>
       </div>
     </div>
   </div>
