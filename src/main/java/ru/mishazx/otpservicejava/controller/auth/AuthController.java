@@ -56,6 +56,13 @@ public class AuthController {
         return "auth/login";
     }
 
+    // @PostMapping("/login")
+    // public String login(@ModelAttribute User user) {
+    //     if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            
+    //     }
+    // }
+
     /**
      * Показывает форму регистрации нового пользователя.
      */
@@ -71,7 +78,15 @@ public class AuthController {
      * После успешной регистрации перенаправляет на страницу входа.
      */
     @PostMapping("/register")
-    public String register(@ModelAttribute User user) {
+    public String register(@ModelAttribute User user, Model model) {
+        // Проверяем, существует ли уже пользователь с таким именем
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            // Если пользователь существует, добавляем сообщение об ошибке и возвращаем форму регистрации
+            model.addAttribute("error", "Пользователь с именем '" + user.getUsername() + "' уже существует. Пожалуйста, выберите другое имя.");
+            model.addAttribute("user", user);
+            return "auth/register";
+        }
+        
         RoleUser userRole = roleService.findRole("USER");
 
         User newUser = User.builder()

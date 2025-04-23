@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.mishazx.otpservicejava.model.otp.DeliveryMethod;
+import ru.mishazx.otpservicejava.model.otp.OTPStatus;
 
 import java.time.LocalDateTime;
 
@@ -38,7 +40,7 @@ public class OTPCode {
     // Статус кода: ACTIVE, EXPIRED, USED
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OtpStatus status;
+    private OTPStatus status;
 
     // Время создания кода
     @Column(nullable = false)
@@ -60,21 +62,6 @@ public class OTPCode {
     @Column(nullable = false)
     private String deliveryAddress;
 
-    // Перечисление для статусов OTP-кода
-    public enum OtpStatus {
-        ACTIVE,   // Код активен и может быть использован
-        EXPIRED,  // Срок действия кода истек
-        USED      // Код был успешно использован
-    }
-
-    // Перечисление для методов доставки
-    public enum DeliveryMethod {
-        EMAIL,    // Отправка по электронной почте
-        SMS,      // Отправка через SMS (SMPP)
-        TELEGRAM, // Отправка через Telegram
-        FILE      // Сохранение в файл
-    }
-
     /**
      * Проверяет, истек ли срок действия кода
      */
@@ -86,7 +73,7 @@ public class OTPCode {
      * Отмечает код как использованный
      */
     public void markAsUsed() {
-        this.status = OtpStatus.USED;
+        this.status = OTPStatus.USED;
         this.usedAt = LocalDateTime.now();
     }
 
@@ -94,6 +81,6 @@ public class OTPCode {
      * Отмечает код как истекший
      */
     public void markAsExpired() {
-        this.status = OtpStatus.EXPIRED;
+        this.status = OTPStatus.EXPIRED;
     }
 }

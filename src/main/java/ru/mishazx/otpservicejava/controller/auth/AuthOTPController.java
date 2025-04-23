@@ -26,12 +26,17 @@ import java.util.UUID;
  */
 @Controller
 @RequestMapping("/auth/otp")
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @Slf4j
 public class AuthOTPController {
 
     private final OTPService otpService;
     private final NotificationService notificationService;
+
+    public AuthOTPController(OTPService otpService, NotificationService notificationService) {
+        this.otpService = otpService;
+        this.notificationService = notificationService;
+    }
 
     /**
      * Отображает страницу выбора метода получения OTP кода.

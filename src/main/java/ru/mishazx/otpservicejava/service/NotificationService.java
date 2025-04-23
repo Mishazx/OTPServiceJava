@@ -2,18 +2,33 @@ package ru.mishazx.otpservicejava.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.mishazx.otpservicejava.service.EmailService;
+import ru.mishazx.otpservicejava.model.otp.DeliveryMethod;
+// EmailService is in the same package, no need to import
 
 /**
  * Сервис для отправки уведомлений пользователям через различные каналы
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class NotificationService {
 
     private final EmailService emailService;
+    private TelegramBotService telegramBotService;
+    
+    @Value("${telegram.enabled:false}")
+    private boolean telegramEnabled;
+
+    NotificationService(EmailService emailService) {
+        this.emailService = emailService;
+    }
+    
+    @Autowired(required = false)
+    public void setTelegramBotService(TelegramBotService telegramBotService) {
+        this.telegramBotService = telegramBotService;
+    }
     // private final SmppSmsService smppSmsService;
 
     /**
@@ -24,15 +39,24 @@ public class NotificationService {
      * @param channel   канал связи (EMAIL, SMS)
      * @return          true если отправка успешна
      */
-    public boolean sendOtp(String contact, String otpCode, NotificationChannel channel) {
+    public boolean sendOtp(String contact, String otpCode, DeliveryMethod channel) {
         try {
             switch (channel) {
                 case EMAIL:
                     emailService.sendOtpEmail(contact, otpCode);
                     break;
                 case SMS:
-                    // smppSmsService.sendOtp(contact, otpCode);
+//                     smppSmsService.sendOtp(contact, otpCode);
                     break;
+                case TELEGRAM:
+                    if (telegramEnabled && telegramBotService != null) {
+                        telegramBotService.sendTelegramOtp(contact, otpCode);
+                    } else {
+                        log.warn("Telegram delivery requested but Telegram bot is disabled or not configured");
+                        return false;
+                    }
+                    break;
+
                 default:
                     log.error("Unsupported notification channel: {}", channel);
                     return false;
@@ -53,7 +77,7 @@ public class NotificationService {
      * @return true если отправка успешна
      */
     public boolean sendSmsOtp(String phoneNumber, String otpCode) {
-        return sendOtp(phoneNumber, otpCode, NotificationChannel.SMS);
+        return sendOtp(phoneNumber, otpCode, DeliveryMethod.SMS);
     }
 
     /**
@@ -64,7 +88,7 @@ public class NotificationService {
      * @return true если отправка успешна
      */
     public boolean sendEmailOtp(String email, String otpCode) {
-        return sendOtp(email, otpCode, NotificationChannel.EMAIL);
+        return sendOtp(email, otpCode, DeliveryMethod.EMAIL);
     }
 
     /**
@@ -83,8 +107,8 @@ public class NotificationService {
     /**
      * Каналы доставки уведомлений
      */
-    public enum NotificationChannel {
-        EMAIL,
-        SMS
-    }
+//    public enum NotificationChannel {
+//        EMAIL,
+//        SMS
+//    }
 }

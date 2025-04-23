@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Фрагмент хедера, который можно включать на все страницы -->
+    <header th:fragment="header" class="main-header">
+        <div class="header-container">
+            <div class="logo">
+                <a th:href="@{/}">OTP Service</a>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">Главная</a></li>
+                    <li sec:authorize="isAuthenticated()"><a th:href="@{/dashboard}">Личный кабинет</a></li>
+                </ul>
+            </nav>
+            <div class="auth-nav">
+                <!-- Если пользователь аутентифицирован, показываем его имя и кнопку выхода -->
+                <div sec:authorize="isAuthenticated()" class="user-info">
+                    <span class="username" sec:authentication="name">Username</span>
+                    <form th:action="@{/logout}" method="post" class="logout-form">
+                        <button type="submit" class="btn btn-logout">Выйти</button>
+                    </form>
+                </div>
+                <!-- Если пользователь не аутентифицирован, показываем кнопки входа и регистрации -->
+                <div sec:authorize="!isAuthenticated()" class="auth-buttons">
+                    <a th:href="@{/login}" class="btn btn-login">Войти</a>
+                    <a th:href="@{/register}" class="btn btn-register">Регистрация</a>
+                </div>
+            </div>
+        </div>
+    </header>
+</body>
+</html>

@@ -1,9 +1,12 @@
 package ru.mishazx.otpservicejava.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.mishazx.otpservicejava.model.OTPCode;
 import ru.mishazx.otpservicejava.model.OTPConfig;
+import ru.mishazx.otpservicejava.model.otp.DeliveryMethod;
+import ru.mishazx.otpservicejava.model.otp.OTPStatus;
 import ru.mishazx.otpservicejava.repository.OTPConfigRepository;
 import ru.mishazx.otpservicejava.repository.OTPRepository;
 
@@ -17,16 +20,21 @@ import lombok.extern.slf4j.Slf4j;
  * Сервис для работы с OTP-кодами: генерация, валидация, управление статусами.
  */
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class OTPService {
     private final OTPRepository otpRepository;
     private final OTPConfigRepository otpConfigRepository;
+    
+    // Use TelegramBotServiceStub instead of TelegramBotService
+    @Autowired(required = false)
+    private TelegramBotServiceStub telegramBotService;
 
-    @Autowired
-    public OTPService(OTPRepository otpRepository, OTPConfigRepository otpConfigRepository) {
-        this.otpRepository = otpRepository;
-        this.otpConfigRepository = otpConfigRepository;
-    }
+//    @Autowired
+//    public OTPService(OTPRepository otpRepository, OTPConfigRepository otpConfigRepository) {
+//        this.otpRepository = otpRepository;
+//        this.otpConfigRepository = otpConfigRepository;
+//    }
 
     /**
      * Генерирует OTP-код для пользователя.
@@ -54,10 +62,10 @@ public class OTPService {
         otpCode.setUserId(userId);
 
         otpCode.setOperationId(operationId);
-        otpCode.setStatus(OTPCode.OtpStatus.ACTIVE);
+        otpCode.setStatus(OTPStatus.ACTIVE);
         otpCode.setCreatedAt(LocalDateTime.now());
         otpCode.setExpiresAt(LocalDateTime.now().plusMinutes(config.getLifetimeMinutes()));
-        otpCode.setDeliveryMethod(OTPCode.DeliveryMethod.valueOf(deliveryMethod.toUpperCase()));
+        otpCode.setDeliveryMethod(DeliveryMethod.valueOf(deliveryMethod.toUpperCase()));
         otpCode.setDeliveryAddress(deliveryAddress);
 
         // Сохраняем код
@@ -85,11 +93,11 @@ public class OTPService {
         if (operationId != null && !operationId.isEmpty()) {
             // Если указан ID операции, учитываем его при поиске
             otpOpt = otpRepository.findByUserIdAndCodeAndStatusAndOperationId(
-                    userId, code, OTPCode.OtpStatus.ACTIVE, operationId);
+                    userId, code, OTPStatus.ACTIVE, operationId);
         } else {
             // Иначе ищем любой активный код
             otpOpt = otpRepository.findByUserIdAndCodeAndStatus(
-                    userId, code, OTPCode.OtpStatus.ACTIVE);
+                    userId, code, OTPStatus.ACTIVE);
         }
 
         if (otpOpt.isPresent()) {
@@ -123,7 +131,7 @@ public class OTPService {
     public OTPCode getLastActiveOtp(String username) {
         Long userId = generateUserIdFromUsername(username);
         Optional<OTPCode> otpOpt = otpRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                userId, OTPCode.OtpStatus.ACTIVE);
+                userId, OTPStatus.ACTIVE);
 
         return otpOpt.orElse(null);
     }
@@ -151,11 +159,11 @@ public class OTPService {
      * Помечает все истекшие коды как EXPIRED.
      * Этот метод обычно вызывается по расписанию.
      */
-    public void markExpiredCodes() {
-        LocalDateTime now = LocalDateTime.now();
-        int count = otpRepository.markExpiredCodes(now);
-        log.info("Marked {} expired OTP codes", count);
-    }
+    //    public void markExpiredCodes() {
+    //        LocalDateTime now = LocalDateTime.now();
+    //        int count = otpRepository.markExpiredCodes(now);
+    //        log.info("Marked {} expired OTP codes", count);
+    //    }
 
     /**
      * Получает текущую конфигурацию OTP или создает с дефолтными значениями.

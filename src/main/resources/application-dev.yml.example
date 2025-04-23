@@ -1,0 +1,31 @@
+# Критичные параметры для разработки
+# Скопируйте этот файл как application-dev.yml и заполните своими значениями
+
+# Настройки Telegram бота
+telegram:
+  enabled: true
+  bot:
+    token: your_telegram_bot_token_here
+    name: your_telegram_bot_name_here
+
+# Настройки почтового сервера
+spring:
+  mail:
+    host: smtp.gmail.coms
+    port: 587ß
+    username: your_email_username_here
+    password: your_email_password_here
+
+# Настройки базы данных
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+
+# Настройки SMPP
+#smpp:
+#  enabled: false
+#  host: your_smpp_host_here
+#  port: 2775
+#  system-id: your_smpp_system_id_here
+#  password: your_smpp_password_here
