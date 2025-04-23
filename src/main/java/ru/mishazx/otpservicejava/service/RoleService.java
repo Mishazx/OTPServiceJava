@@ -35,7 +35,6 @@ public class RoleService {
      */
     public void checkRoleOrCreate(String arg){
         try {
-            // вызываем
             RoleUser role = findRole(arg);
             log.info("Предустановленная роль: {} не удалена", role.getNameRole());
 

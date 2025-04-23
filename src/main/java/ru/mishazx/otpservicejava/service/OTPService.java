@@ -1,7 +1,7 @@
 package ru.mishazx.otpservicejava.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.mishazx.otpservicejava.model.OTPCode;
 import ru.mishazx.otpservicejava.model.OTPConfig;
@@ -25,41 +25,16 @@ import lombok.extern.slf4j.Slf4j;
 public class OTPService {
     private final OTPRepository otpRepository;
     private final OTPConfigRepository otpConfigRepository;
-    
-    @Autowired(required = false)
-    private TelegramBotService telegramBotService;
+    private final NotificationService notificationService;
 
-//    @Autowired
-//    public OTPService(OTPRepository otpRepository, OTPConfigRepository otpConfigRepository) {
-//        this.otpRepository = otpRepository;
-//        this.otpConfigRepository = otpConfigRepository;
-//    }
-
-    /**
-     * Генерирует OTP-код для пользователя.
-     *
-     * @param username Имя пользователя
-     * @param deliveryMethod Метод доставки
-     * @param deliveryAddress Адрес доставки
-     * @param operationId ID операции (опционально)
-     * @return Сгенерированный OTP-код
-     */
     public String generateOtp(String username, String deliveryMethod, String deliveryAddress, String operationId) {
-        // Получаем текущую конфигурацию OTP
         OTPConfig config = getCurrentConfig();
-
-        // Генерируем случайный код
         String code = generateRandomCode(config.getCodeLength());
 
-        // Создаем новую запись OTP в базе
         OTPCode otpCode = new OTPCode();
         otpCode.setCode(code);
-
-        // Используем хеш-код имени пользователя в качестве идентификатора
-        // Это временное решение для обработки строковых идентификаторов
         Long userId = generateUserIdFromUsername(username);
         otpCode.setUserId(userId);
-
         otpCode.setOperationId(operationId);
         otpCode.setStatus(OTPStatus.ACTIVE);
         otpCode.setCreatedAt(LocalDateTime.now());
@@ -67,9 +42,16 @@ public class OTPService {
         otpCode.setDeliveryMethod(DeliveryMethod.valueOf(deliveryMethod.toUpperCase()));
         otpCode.setDeliveryAddress(deliveryAddress);
 
-        // Сохраняем код
         otpRepository.save(otpCode);
         log.info("Generated OTP code for user: {}, delivery method: {}", username, deliveryMethod);
+
+        log.info("Sending OTP code to: {}", otpCode);
+
+        // Отправляем OTP код
+        boolean sent = notificationService.sendOtp(deliveryAddress, code, DeliveryMethod.valueOf(deliveryMethod.toUpperCase()));
+        if (!sent) {
+            log.error("Failed to send OTP code to user: {}", username);
+        }
 
         return code;
     }
